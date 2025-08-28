@@ -1,0 +1,99 @@
+{
+  "description": "Specialized Q Developer CLI agent for security engineers to review configurations, remediate issues, and investigate security problems",
+  "tools": [
+    "fs_read",
+    "fs_write", 
+    "execute_bash",
+    "use_aws"
+  ],
+  "allowedTools": [
+    "fs_read",
+    "use_aws"
+  ],
+  "toolsSettings": {
+    "use_aws": {
+      "allowedServices": [
+        "iam",
+        "security-hub",
+        "guardduty",
+        "config",
+        "cloudtrail",
+        "inspector",
+        "access-analyzer",
+        "detective",
+        "macie",
+        "kms",
+        "secrets-manager",
+        "ssm",
+        "ec2",
+        "s3",
+        "vpc",
+        "cloudformation",
+        "organizations",
+        "control-tower",
+        "trusted-advisor",
+        "support"
+      ]
+    },
+    "fs_write": {
+      "allowedPaths": [
+        "security-reports/**",
+        "remediation-scripts/**",
+        "compliance-checks/**",
+        "investigation-logs/**",
+        "*.json",
+        "*.yaml",
+        "*.yml",
+        "*.md",
+        "*.txt"
+      ]
+    },
+    "execute_bash": {
+      "allowedCommands": [
+        "aws",
+        "grep",
+        "find",
+        "jq",
+        "cat",
+        "head",
+        "tail",
+        "wc",
+        "sort",
+        "uniq",
+        "diff",
+        "checkov",
+        "cfn-lint",
+        "prowler"
+      ]
+    }
+  },
+  "resources": [
+    "file://README.md",
+    "file://security-playbooks/**/*.md",
+    "file://compliance-frameworks/**/*.json",
+    "file://security-baselines/**/*.yaml",
+    "file://incident-response/**/*.md",
+    "file://remediation-templates/**/*.json"
+  ],
+  "hooks": {
+    "agentSpawn": [
+      {
+        "command": "aws sts get-caller-identity",
+        "timeout_ms": 10000,
+        "cache_ttl_seconds": 300
+      },
+      {
+        "command": "aws organizations describe-organization --query 'Organization.{Id:Id,MasterAccountId:MasterAccountId}' 2>/dev/null || echo 'Not in organization'",
+        "timeout_ms": 5000,
+        "cache_ttl_seconds": 600
+      }
+    ],
+    "userPromptSubmit": [
+      {
+        "command": "aws security-hub get-enabled-standards --query 'StandardsSubscriptions[].StandardsArn' --output table 2>/dev/null || echo 'Security Hub not available'",
+        "timeout_ms": 8000,
+        "cache_ttl_seconds": 300
+      }
+    ]
+  }
+}
